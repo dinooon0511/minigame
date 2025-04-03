@@ -1,429 +1,855 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Фитнес-трекер</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Фитнес Трекер</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .tab {
-            display: none;
-        }
-        .active {
-            display: block;
-        }
-        .nav {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ccc;
-        }
-        .nav button {
-            padding: 10px 15px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .nav button.active {
-            border-bottom: 2px solid #007bff;
-            color: #007bff;
-        }
-        input, button, select {
-            padding: 8px;
-            margin: 5px 0;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .red {
-            color: red;
-            font-weight: bold;
-        }
-        .green {
-            color: green;
-            font-weight: bold;
-        }
-        .meal-entry {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin: 10px 0;
-            background-color: white;
-        }
-        .radio-group {
-            display: flex;
-            gap: 15px;
-            margin: 10px 0;
-        }
-        .radio-option {
-            display: flex;
-            align-items: center;
-        }
-        .radio-option input {
-            width: auto;
-            margin-right: 5px;
-        }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0;
+        background-color: #f7f7f7;
+        color: #333;
+      }
+      .header {
+        padding: 16px;
+        background-color: white;
+        border-bottom: 1px solid #e5e5ea;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+        text-align: center;
+      }
+      .profile-card {
+        background-color: white;
+        padding: 16px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid #e5e5ea;
+      }
+      .profile-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .profile-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .profile-label {
+        color: #8e8e93;
+        font-size: 14px;
+      }
+      .profile-value {
+        font-size: 16px;
+      }
+      .account-type {
+        color: #34c759;
+        font-weight: 500;
+      }
+      .tab {
+        display: none;
+      }
+      .active {
+        display: block;
+      }
+      .nav {
+        display: flex;
+        background-color: white;
+        border-bottom: 1px solid #e5e5ea;
+        position: sticky;
+        top: 57px;
+        z-index: 99;
+      }
+      .nav button {
+        flex: 1;
+        padding: 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        color: #8e8e93;
+        border-bottom: 2px solid transparent;
+      }
+      .nav button.active {
+        color: #007aff;
+        border-bottom: 2px solid #007aff;
+      }
+      .section {
+        background-color: white;
+        margin-bottom: 16px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .section-title {
+        padding: 16px;
+        font-size: 18px;
+        font-weight: 600;
+        border-bottom: 1px solid #e5e5ea;
+      }
+      .form-group {
+        padding: 16px;
+        border-bottom: 1px solid #e5e5ea;
+      }
+      .form-group:last-child {
+        border-bottom: none;
+      }
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #8e8e93;
+      }
+      .form-input {
+        width: 100%;
+        padding: 8px 0;
+        border: none;
+        font-size: 16px;
+        border-bottom: 1px solid #e5e5ea;
+      }
+      .form-input:focus {
+        outline: none;
+        border-bottom: 1px solid #007aff;
+      }
+      .btn {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background-color: #007aff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        margin: 16px 0;
+        cursor: pointer;
+      }
+      .btn-secondary {
+        background-color: #e5e5ea;
+        color: #000;
+      }
+      .result {
+        padding: 16px;
+        text-align: center;
+        font-size: 18px;
+      }
+      .meal-entry {
+        padding: 16px;
+        border-bottom: 1px solid #e5e5ea;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .meal-info {
+        flex: 1;
+      }
+      .meal-name {
+        font-weight: 500;
+      }
+      .meal-calories {
+        color: #8e8e93;
+      }
+      .delete-btn {
+        color: #ff3b30;
+        background: none;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .total-calories {
+        padding: 16px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .calories-comparison {
+        padding: 16px;
+        text-align: center;
+        font-size: 16px;
+      }
+      .green {
+        color: #34c759;
+      }
+      .red {
+        color: #ff3b30;
+      }
+      .radio-group {
+        display: flex;
+        gap: 16px;
+        margin: 8px 0;
+      }
+      .radio-option {
+        display: flex;
+        align-items: center;
+      }
+      .radio-option input {
+        margin-right: 8px;
+      }
+      .hidden {
+        display: none;
+      }
+      .meal-type-tabs {
+        display: flex;
+        background-color: white;
+        border-bottom: 1px solid #e5e5ea;
+        position: sticky;
+        top: 114px;
+        z-index: 98;
+      }
+      .meal-type-tab {
+        flex: 1;
+        padding: 12px;
+        text-align: center;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+      }
+      .meal-type-tab.active {
+        border-bottom: 2px solid #007aff;
+        color: #007aff;
+      }
+      .add-meal-form {
+        padding: 16px;
+        background-color: white;
+        border-bottom: 1px solid #e5e5ea;
+      }
+      .meal-type-header {
+        padding: 16px;
+        font-size: 16px;
+        font-weight: 600;
+        background-color: #f7f7f7;
+        border-bottom: 1px solid #e5e5ea;
+      }
+      .meal-type-summary {
+        padding: 8px 16px;
+        font-size: 14px;
+        color: #8e8e93;
+        background-color: #f7f7f7;
+        text-align: right;
+      }
     </style>
-</head>
-<body>
-    <!-- Авторизация/Регистрация -->
-    <div id="auth-tab" class="tab active">
-        <h2>Вход / Регистрация</h2>
-        <div id="login-form">
-            <input type="text" id="login-username" placeholder="Логин">
-            <input type="password" id="login-password" placeholder="Пароль">
-            <button onclick="login()">Войти</button>
-            <button onclick="showRegister()">Регистрация</button>
-        </div>
-        <div id="register-form" style="display:none">
-            <input type="text" id="reg-username" placeholder="Логин">
-            <input type="password" id="reg-password" placeholder="Пароль">
-            <button onclick="register()">Зарегистрироваться</button>
-            <button onclick="showLogin()">Уже есть аккаунт</button>
-        </div>
+  </head>
+  <body>
+    <!-- Шапка -->
+    <div class="header">
+      <h1>Фитнес Трекер</h1>
     </div>
 
-    <!-- Личный кабинет -->
-    <div id="account-tab" class="tab">
-        <div class="nav">
-            <button onclick="openTab('params-tab', this)" class="active">Мои параметры</button>
-            <button onclick="openTab('calories-tab', this)">Записать калории</button>
-            <button onclick="logout()" style="margin-left: auto;">Выйти</button>
-        </div>
+    <!-- Навигация -->
+    <div class="nav">
+      <button onclick="openTab('auth-tab', this)" class="active">Профиль</button>
+      <button onclick="openTab('params-tab', this)">Параметры</button>
+      <button onclick="openTab('calories-tab', this)">Калории</button>
+    </div>
 
-        <!-- Вкладка "Мои параметры" -->
-        <div id="params-tab" class="tab active">
-            <h3>Мои параметры</h3>
-            
-            <div class="radio-group">
-                <div class="radio-option">
-                    <input type="radio" id="male" name="gender" value="male" checked>
-                    <label for="male">Мужчина</label>
-                </div>
-                <div class="radio-option">
-                    <input type="radio" id="female" name="gender" value="female">
-                    <label for="female">Женщина</label>
-                </div>
-            </div>
-            
-            <input type="number" id="age" placeholder="Возраст (лет)">
-            <input type="number" id="height" placeholder="Рост (см)">
-            <input type="number" id="weight" placeholder="Вес (кг)">
-            <button onclick="calculateCalories()">Рассчитать калории</button>
-            <div id="calories-result"></div>
+    <!-- Вкладка авторизации/профиля -->
+    <div id="auth-tab" class="tab active">
+      <div class="profile-card">
+        <div id="login-form">
+          <div class="form-group">
+            <label class="form-label">Логин</label>
+            <input type="text" id="login-username" class="form-input" placeholder="Введите логин" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Пароль</label>
+            <input
+              type="password"
+              id="login-password"
+              class="form-input"
+              placeholder="Введите пароль"
+            />
+          </div>
+          <button onclick="login()" class="btn">Войти</button>
+          <button onclick="showRegister()" class="btn btn-secondary">Регистрация</button>
         </div>
+        <div id="register-form" class="hidden">
+          <div class="form-group">
+            <label class="form-label">Логин</label>
+            <input
+              type="text"
+              id="reg-username"
+              class="form-input"
+              placeholder="Придумайте логин"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Пароль</label>
+            <input
+              type="password"
+              id="reg-password"
+              class="form-input"
+              placeholder="Придумайте пароль"
+            />
+          </div>
+          <button onclick="register()" class="btn">Зарегистрироваться</button>
+          <button onclick="showLogin()" class="btn btn-secondary">Уже есть аккаунт</button>
+        </div>
+        <div id="profile-info" class="hidden">
+          <div class="profile-info">
+            <div class="profile-row">
+              <span class="profile-label">Логин</span>
+              <span id="profile-username" class="profile-value"></span>
+            </div>
+            <div class="profile-row">
+              <span class="profile-label">Тип учетной записи</span>
+              <span class="profile-value account-type">Бесплатная</span>
+            </div>
+          </div>
+          <button onclick="logout()" class="btn btn-secondary">Выйти</button>
+        </div>
+      </div>
+    </div>
 
-        <!-- Вкладка "Записать калории" -->
-        <div id="calories-tab" class="tab">
-            <h3>Учёт калорий</h3>
-            <div id="daily-calories">
-                <h4>Сегодня: <span id="today-date"></span></h4>
-                <div id="total-calories">Всего калорий: 0</div>
-                <div id="calories-comparison"></div>
+    <!-- Вкладка параметров -->
+    <div id="params-tab" class="tab">
+      <div class="section">
+        <div class="section-title">Мои параметры</div>
+        <div class="form-group">
+          <label class="form-label">Пол</label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" id="male" name="gender" value="male" checked />
+              <label for="male">Мужчина</label>
             </div>
-            
-            <h4>Добавить приём пищи:</h4>
-            <input type="text" id="meal-name" placeholder="Название">
-            <input type="number" id="meal-calories" placeholder="Калории">
-            <button onclick="addMeal()">Добавить</button>
-            
-            <div id="meals-list"></div>
-            <button onclick="saveDay()">Сохранить день</button>
+            <div class="radio-option">
+              <input type="radio" id="female" name="gender" value="female" />
+              <label for="female">Женщина</label>
+            </div>
+          </div>
         </div>
+        <div class="form-group">
+          <label class="form-label">Возраст</label>
+          <input type="number" id="age" class="form-input" placeholder="Введите возраст" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Рост (см)</label>
+          <input type="number" id="height" class="form-input" placeholder="Введите рост" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Вес (кг)</label>
+          <input type="number" id="weight" class="form-input" placeholder="Введите вес" />
+        </div>
+        <button onclick="calculateCalories()" class="btn">Рассчитать калории</button>
+        <div id="calories-result" class="result"></div>
+      </div>
+    </div>
+
+    <!-- Вкладка учета калорий -->
+    <div id="calories-tab" class="tab">
+      <div class="section">
+        <div class="section-title">Учёт калорий</div>
+        <div class="form-group">
+          <div id="daily-calories">
+            <div class="form-label">Сегодня: <span id="today-date"></span></div>
+            <div id="total-calories" class="total-calories">Всего калорий: 0</div>
+            <div id="calories-comparison" class="calories-comparison"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="meal-type-tabs">
+        <div class="meal-type-tab active" onclick="openMealType('breakfast', this)">Завтрак</div>
+        <div class="meal-type-tab" onclick="openMealType('lunch', this)">Обед</div>
+        <div class="meal-type-tab" onclick="openMealType('dinner', this)">Ужин</div>
+        <div class="meal-type-tab" onclick="openMealType('snack', this)">Перекус</div>
+      </div>
+
+      <!-- Форма добавления для завтрака -->
+      <div id="breakfast-form" class="add-meal-form">
+        <div class="form-group">
+          <label class="form-label">Название блюда</label>
+          <input type="text" id="breakfast-name" class="form-input" placeholder="Например: Омлет" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Калории</label>
+          <input
+            type="number"
+            id="breakfast-calories"
+            class="form-input"
+            placeholder="Введите количество калорий"
+          />
+        </div>
+        <button onclick="addMeal('breakfast')" class="btn">Добавить завтрак</button>
+      </div>
+
+      <!-- Форма добавления для обеда -->
+      <div id="lunch-form" class="add-meal-form" style="display: none">
+        <div class="form-group">
+          <label class="form-label">Название блюда</label>
+          <input type="text" id="lunch-name" class="form-input" placeholder="Например: Суп" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Калории</label>
+          <input
+            type="number"
+            id="lunch-calories"
+            class="form-input"
+            placeholder="Введите количество калорий"
+          />
+        </div>
+        <button onclick="addMeal('lunch')" class="btn">Добавить обед</button>
+      </div>
+
+      <!-- Форма добавления для ужина -->
+      <div id="dinner-form" class="add-meal-form" style="display: none">
+        <div class="form-group">
+          <label class="form-label">Название блюда</label>
+          <input
+            type="text"
+            id="dinner-name"
+            class="form-input"
+            placeholder="Например: Рыба с овощами"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Калории</label>
+          <input
+            type="number"
+            id="dinner-calories"
+            class="form-input"
+            placeholder="Введите количество калорий"
+          />
+        </div>
+        <button onclick="addMeal('dinner')" class="btn">Добавить ужин</button>
+      </div>
+
+      <!-- Форма добавления для перекуса -->
+      <div id="snack-form" class="add-meal-form" style="display: none">
+        <div class="form-group">
+          <label class="form-label">Название блюда</label>
+          <input type="text" id="snack-name" class="form-input" placeholder="Например: Яблоко" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Калории</label>
+          <input
+            type="number"
+            id="snack-calories"
+            class="form-input"
+            placeholder="Введите количество калорий"
+          />
+        </div>
+        <button onclick="addMeal('snack')" class="btn">Добавить перекус</button>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Мои приёмы пищи</div>
+        <div id="meals-list"></div>
+        <div id="daily-summary" class="meal-type-summary"></div>
+      </div>
+      <button onclick="saveDay()" class="btn">Сохранить день</button>
     </div>
 
     <script>
-        // Данные пользователей
-        let users = JSON.parse(localStorage.getItem('users')) || {};
-        // Текущий пользователь
-        let currentUser = null;
-        // Данные пользователя
-        let userData = JSON.parse(localStorage.getItem('userData')) || {};
-        // Текущая дата
-        const today = new Date().toLocaleDateString();
+      // Данные пользователей
+      let users = JSON.parse(localStorage.getItem('users')) || {};
+      // Текущий пользователь
+      let currentUser = null;
+      // Данные пользователя
+      let userData = JSON.parse(localStorage.getItem('userData')) || {};
+      // Текущая дата
+      const today = new Date().toLocaleDateString();
+      // Текущий тип приёма пищи
+      let currentMealType = 'breakfast';
 
-        // Инициализация Telegram WebApp
-        if (window.Telegram && Telegram.WebApp) {
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
+      // Инициализация Telegram WebApp
+      if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+      }
+
+      // Инициализация при загрузке
+      document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('today-date').textContent = today;
+        updateUI();
+      });
+
+      // Обновление интерфейса
+      function updateUI() {
+        if (currentUser) {
+          document.getElementById('login-form').classList.add('hidden');
+          document.getElementById('register-form').classList.add('hidden');
+          document.getElementById('profile-info').classList.remove('hidden');
+          document.getElementById('profile-username').textContent = currentUser;
+          loadUserData();
+          updateMealsList();
+        } else {
+          document.getElementById('login-form').classList.remove('hidden');
+          document.getElementById('register-form').classList.add('hidden');
+          document.getElementById('profile-info').classList.add('hidden');
+        }
+      }
+
+      // Показать форму регистрации
+      function showRegister() {
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('register-form').classList.remove('hidden');
+      }
+
+      // Показать форму входа
+      function showLogin() {
+        document.getElementById('register-form').classList.add('hidden');
+        document.getElementById('login-form').classList.remove('hidden');
+      }
+
+      // Регистрация
+      function register() {
+        const username = document.getElementById('reg-username').value;
+        const password = document.getElementById('reg-password').value;
+
+        if (!username || !password) {
+          alert('Заполните все поля');
+          return;
         }
 
-        // Показать форму регистрации
-        function showRegister() {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('register-form').style.display = 'block';
+        if (users[username]) {
+          alert('Пользователь уже существует');
+          return;
         }
 
-        // Показать форму входа
-        function showLogin() {
-            document.getElementById('register-form').style.display = 'none';
-            document.getElementById('login-form').style.display = 'block';
+        users[username] = password;
+        localStorage.setItem('users', JSON.stringify(users));
+
+        // Создаём запись для нового пользователя
+        if (!userData[username]) {
+          userData[username] = {
+            gender: 'male',
+            age: 0,
+            height: 0,
+            weight: 0,
+            dailyCalories: 0,
+            meals: {},
+            days: {},
+          };
+          localStorage.setItem('userData', JSON.stringify(userData));
         }
 
-        // Регистрация
-        function register() {
-            const username = document.getElementById('reg-username').value;
-            const password = document.getElementById('reg-password').value;
-            
-            if (!username || !password) {
-                alert('Заполните все поля');
-                return;
-            }
-            
-            if (users[username]) {
-                alert('Пользователь уже существует');
-                return;
-            }
-            
-            users[username] = password;
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            // Создаём запись для нового пользователя
-            if (!userData[username]) {
-                userData[username] = {
-                    gender: 'male',
-                    age: 0,
-                    height: 0,
-                    weight: 0,
-                    dailyCalories: 0,
-                    meals: {},
-                    days: {}
-                };
-                localStorage.setItem('userData', JSON.stringify(userData));
-            }
-            
-            alert('Регистрация успешна!');
-            showLogin();
+        alert('Регистрация успешна!');
+        showLogin();
+      }
+
+      // Вход
+      function login() {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+
+        if (!users[username] || users[username] !== password) {
+          alert('Неверный логин или пароль');
+          return;
         }
 
-        // Вход
-        function login() {
-            const username = document.getElementById('login-username').value;
-            const password = document.getElementById('login-password').value;
-            
-            if (!users[username] || users[username] !== password) {
-                alert('Неверный логин или пароль');
-                return;
-            }
-            
-            currentUser = username;
-            
-            // Загружаем данные пользователя
-            if (!userData[username]) {
-                userData[username] = {
-                    gender: 'male',
-                    age: 0,
-                    height: 0,
-                    weight: 0,
-                    dailyCalories: 0,
-                    meals: {},
-                    days: {}
-                };
-                localStorage.setItem('userData', JSON.stringify(userData));
-            }
-            
-            // Переключаем на личный кабинет
-            document.getElementById('auth-tab').classList.remove('active');
-            document.getElementById('account-tab').classList.add('active');
-            
-            // Загружаем данные
-            loadUserData();
-            document.getElementById('today-date').textContent = today;
-            updateMealsList();
+        currentUser = username;
+
+        // Загружаем данные пользователя
+        if (!userData[username]) {
+          userData[username] = {
+            gender: 'male',
+            age: 0,
+            height: 0,
+            weight: 0,
+            dailyCalories: 0,
+            meals: {},
+            days: {},
+          };
+          localStorage.setItem('userData', JSON.stringify(userData));
         }
 
-        // Выход
-        function logout() {
-            currentUser = null;
-            document.getElementById('account-tab').classList.remove('active');
-            document.getElementById('auth-tab').classList.add('active');
+        updateUI();
+      }
+
+      // Выход
+      function logout() {
+        currentUser = null;
+        updateUI();
+      }
+
+      // Переключение вкладок
+      function openTab(tabId, button) {
+        // Скрыть все вкладки
+        document.querySelectorAll('.tab').forEach((tab) => {
+          tab.classList.remove('active');
+        });
+
+        // Убрать активность у всех кнопок
+        document.querySelectorAll('.nav button').forEach((btn) => {
+          btn.classList.remove('active');
+        });
+
+        // Показать выбранную вкладку
+        document.getElementById(tabId).classList.add('active');
+        button.classList.add('active');
+
+        // Если открываем вкладку калорий - обновляем список
+        if (tabId === 'calories-tab') {
+          updateMealsList();
+        }
+      }
+
+      // Открытие вкладки с типом приёма пищи
+      function openMealType(type, element) {
+        currentMealType = type;
+
+        // Скрыть все формы
+        document.querySelectorAll('.add-meal-form').forEach((form) => {
+          form.style.display = 'none';
+        });
+
+        // Убрать активность у всех вкладок
+        document.querySelectorAll('.meal-type-tab').forEach((tab) => {
+          tab.classList.remove('active');
+        });
+
+        // Показать выбранную форму
+        document.getElementById(`${type}-form`).style.display = 'block';
+        element.classList.add('active');
+      }
+
+      // Загрузка данных пользователя
+      function loadUserData() {
+        if (!currentUser) return;
+
+        const user = userData[currentUser];
+        document.getElementById(user.gender).checked = true;
+        document.getElementById('age').value = user.age || '';
+        document.getElementById('height').value = user.height || '';
+        document.getElementById('weight').value = user.weight || '';
+
+        if (user.dailyCalories) {
+          document.getElementById(
+            'calories-result',
+          ).innerHTML = `Ваша дневная норма: <strong>${user.dailyCalories}</strong> ккал`;
+        }
+      }
+
+      // Расчёт калорий по формуле Харриса-Бенедикта
+      function calculateCalories() {
+        if (!currentUser) {
+          alert('Войдите в систему');
+          return;
         }
 
-        // Переключение вкладок
-        function openTab(tabId, button) {
-            // Скрыть все вкладки
-            document.querySelectorAll('#account-tab .tab').forEach(tab => {
-                tab.classList.remove('active');
+        const gender = document.querySelector('input[name="gender"]:checked').value;
+        const age = parseInt(document.getElementById('age').value);
+        const height = parseInt(document.getElementById('height').value);
+        const weight = parseInt(document.getElementById('weight').value);
+
+        if (!age || !height || !weight) {
+          alert('Заполните все поля');
+          return;
+        }
+
+        let calories;
+        if (gender === 'male') {
+          // Формула для мужчин: (10 × вес) + (6,25 × рост) - (5 × возраст) + 5
+          calories = 10 * weight + 6.25 * height - 5 * age + 5;
+        } else {
+          // Формула для женщин: (10 × вес) + (6,25 × рост) - (5 × возраст) - 161
+          calories = 10 * weight + 6.25 * height - 5 * age - 161;
+        }
+
+        // Округляем до целого
+        calories = Math.round(calories);
+
+        // Сохраняем данные
+        userData[currentUser].gender = gender;
+        userData[currentUser].age = age;
+        userData[currentUser].height = height;
+        userData[currentUser].weight = weight;
+        userData[currentUser].dailyCalories = calories;
+        localStorage.setItem('userData', JSON.stringify(userData));
+
+        document.getElementById(
+          'calories-result',
+        ).innerHTML = `Ваша дневная норма: <strong>${calories}</strong> ккал`;
+
+        // Обновляем сравнение калорий
+        updateCaloriesComparison();
+      }
+
+      // Добавление приёма пищи
+      function addMeal(type) {
+        if (!currentUser) {
+          alert('Войдите в систему');
+          return;
+        }
+
+        const name = document.getElementById(`${type}-name`).value;
+        const calories = parseInt(document.getElementById(`${type}-calories`).value);
+
+        if (!name || !calories) {
+          alert('Заполните все поля');
+          return;
+        }
+
+        // Инициализируем данные за сегодня, если их нет
+        if (!userData[currentUser].meals[today]) {
+          userData[currentUser].meals[today] = {
+            breakfast: [],
+            lunch: [],
+            dinner: [],
+            snack: [],
+          };
+        }
+
+        // Добавляем запись
+        userData[currentUser].meals[today][type].push({
+          name,
+          calories,
+          type,
+          timestamp: new Date().getTime(),
+        });
+
+        localStorage.setItem('userData', JSON.stringify(userData));
+
+        // Очищаем поля
+        document.getElementById(`${type}-name`).value = '';
+        document.getElementById(`${type}-calories`).value = '';
+
+        // Обновляем список
+        updateMealsList();
+      }
+
+      // Обновление списка приёмов пищи
+      function updateMealsList() {
+        if (!currentUser) return;
+
+        const mealsList = document.getElementById('meals-list');
+        mealsList.innerHTML = '';
+
+        // Проверяем, есть ли данные за сегодня
+        if (
+          !userData[currentUser].meals[today] ||
+          Object.values(userData[currentUser].meals[today]).flat().length === 0
+        ) {
+          mealsList.innerHTML = '<div class="meal-entry">Нет записей за сегодня</div>';
+          document.getElementById('total-calories').textContent = 'Всего калорий: 0';
+          document.getElementById('daily-summary').textContent = '';
+          updateCaloriesComparison(0);
+          return;
+        }
+
+        let total = 0;
+        let typeTotals = {
+          breakfast: 0,
+          lunch: 0,
+          dinner: 0,
+          snack: 0,
+        };
+
+        // Показываем приёмы пищи по категориям
+        const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+        mealTypes.forEach((type) => {
+          if (
+            userData[currentUser].meals[today][type] &&
+            userData[currentUser].meals[today][type].length > 0
+          ) {
+            // Добавляем заголовок типа приёма пищи
+            const typeHeader = document.createElement('div');
+            typeHeader.className = 'meal-type-header';
+            typeHeader.textContent = getMealTypeName(type);
+            mealsList.appendChild(typeHeader);
+
+            // Добавляем каждое блюдо
+            userData[currentUser].meals[today][type].forEach((meal, index) => {
+              total += meal.calories;
+              typeTotals[type] += meal.calories;
+
+              const mealEntry = document.createElement('div');
+              mealEntry.className = 'meal-entry';
+              mealEntry.innerHTML = `
+                            <div class="meal-info">
+                                <div class="meal-name">${meal.name}</div>
+                                <div class="meal-calories">${meal.calories} ккал</div>
+                            </div>
+                            <button onclick="deleteMeal('${type}', ${index})" class="delete-btn">Удалить</button>
+                        `;
+              mealsList.appendChild(mealEntry);
             });
-            
-            // Убрать активность у всех кнопок
-            document.querySelectorAll('#account-tab .nav button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Показать выбранную вкладку
-            document.getElementById(tabId).classList.add('active');
-            button.classList.add('active');
+
+            // Добавляем итог по типу приёма пищи
+            const typeSummary = document.createElement('div');
+            typeSummary.className = 'meal-type-summary';
+            typeSummary.textContent = `Всего: ${typeTotals[type]} ккал`;
+            mealsList.appendChild(typeSummary);
+          }
+        });
+
+        // Обновляем общее количество калорий
+        document.getElementById('total-calories').textContent = `Всего калорий: ${total}`;
+        document.getElementById('daily-summary').textContent = `Итого за день: ${total} ккал`;
+        updateCaloriesComparison(total);
+      }
+
+      // Получение названия типа приёма пищи
+      function getMealTypeName(type) {
+        const names = {
+          breakfast: 'Завтрак',
+          lunch: 'Обед',
+          dinner: 'Ужин',
+          snack: 'Перекус',
+        };
+        return names[type] || type;
+      }
+
+      // Удаление приёма пищи
+      function deleteMeal(type, index) {
+        if (!currentUser) return;
+
+        userData[currentUser].meals[today][type].splice(index, 1);
+        localStorage.setItem('userData', JSON.stringify(userData));
+        updateMealsList();
+      }
+
+      // Сохранение дня
+      function saveDay() {
+        if (!currentUser) {
+          alert('Войдите в систему');
+          return;
         }
 
-        // Загрузка данных пользователя
-        function loadUserData() {
-            if (!currentUser) return;
-            
-            const user = userData[currentUser];
-            document.getElementById(user.gender).checked = true;
-            document.getElementById('age').value = user.age || '';
-            document.getElementById('height').value = user.height || '';
-            document.getElementById('weight').value = user.weight || '';
-            
-            if (user.dailyCalories) {
-                document.getElementById('calories-result').innerHTML = 
-                    `Ваша дневная норма: <strong>${user.dailyCalories}</strong> ккал`;
-            }
+        const total = userData[currentUser].meals[today]
+          ? Object.values(userData[currentUser].meals[today])
+              .flat()
+              .reduce((sum, meal) => sum + meal.calories, 0)
+          : 0;
+
+        userData[currentUser].days[today] = total;
+        localStorage.setItem('userData', JSON.stringify(userData));
+        alert('Данные за день сохранены');
+      }
+
+      // Сравнение калорий
+      function updateCaloriesComparison(totalCalories) {
+        if (!currentUser) return;
+
+        const dailyCalories = userData[currentUser].dailyCalories || 0;
+        const total =
+          totalCalories !== undefined
+            ? totalCalories
+            : userData[currentUser].meals[today]
+            ? Object.values(userData[currentUser].meals[today])
+                .flat()
+                .reduce((sum, meal) => sum + meal.calories, 0)
+            : 0;
+
+        const comparisonElement = document.getElementById('calories-comparison');
+
+        if (dailyCalories === 0) {
+          comparisonElement.innerHTML = 'Рассчитайте свою норму калорий во вкладке "Параметры"';
+          return;
         }
 
-        // Расчёт калорий по формуле Харриса-Бенедикта
-        function calculateCalories() {
-            if (!currentUser) return;
-            
-            const gender = document.querySelector('input[name="gender"]:checked').value;
-            const age = parseInt(document.getElementById('age').value);
-            const height = parseInt(document.getElementById('height').value);
-            const weight = parseInt(document.getElementById('weight').value);
-            
-            if (!age || !height || !weight) {
-                alert('Заполните все поля');
-                return;
-            }
-            
-            let calories;
-            if (gender === 'male') {
-                // Формула для мужчин: (10 × вес) + (6,25 × рост) - (5 × возраст) + 5
-                calories = (10 * weight) + (6.25 * height) - (5 * age) + 5;
-            } else {
-                // Формула для женщин: (10 × вес) + (6,25 × рост) - (5 × возраст) - 161
-                calories = (10 * weight) + (6.25 * height) - (5 * age) - 161;
-            }
-            
-            // Округляем до целого
-            calories = Math.round(calories);
-            
-            // Сохраняем данные
-            userData[currentUser].gender = gender;
-            userData[currentUser].age = age;
-            userData[currentUser].height = height;
-            userData[currentUser].weight = weight;
-            userData[currentUser].dailyCalories = calories;
-            localStorage.setItem('userData', JSON.stringify(userData));
-            
-            document.getElementById('calories-result').innerHTML = 
-                `Ваша дневная норма: <strong>${calories}</strong> ккал`;
-            
-            // Обновляем сравнение калорий
-            updateCaloriesComparison();
+        if (total < dailyCalories) {
+          comparisonElement.innerHTML = `Вы употребили <span class="red">${total} из ${dailyCalories}</span> ккал (недостаточно)`;
+        } else {
+          comparisonElement.innerHTML = `Вы употребили <span class="green">${total} из ${dailyCalories}</span> ккал (норма достигнута)`;
         }
-
-        // Добавление приёма пищи
-        function addMeal() {
-            if (!currentUser) return;
-            
-            const name = document.getElementById('meal-name').value;
-            const calories = parseInt(document.getElementById('meal-calories').value);
-            
-            if (!name || !calories) {
-                alert('Заполните все поля');
-                return;
-            }
-            
-            if (!userData[currentUser].meals[today]) {
-                userData[currentUser].meals[today] = [];
-            }
-            
-            userData[currentUser].meals[today].push({
-                name,
-                calories
-            });
-            
-            localStorage.setItem('userData', JSON.stringify(userData));
-            
-            // Очищаем поля
-            document.getElementById('meal-name').value = '';
-            document.getElementById('meal-calories').value = '';
-            
-            // Обновляем список
-            updateMealsList();
-        }
-
-        // Обновление списка приёмов пищи
-        function updateMealsList() {
-            if (!currentUser) return;
-            
-            const mealsList = document.getElementById('meals-list');
-            mealsList.innerHTML = '';
-            
-            if (!userData[currentUser].meals[today] || userData[currentUser].meals[today].length === 0) {
-                mealsList.innerHTML = '<p>Нет записей за сегодня</p>';
-                return;
-            }
-            
-            let total = 0;
-            userData[currentUser].meals[today].forEach((meal, index) => {
-                total += meal.calories;
-                
-                const mealEntry = document.createElement('div');
-                mealEntry.className = 'meal-entry';
-                mealEntry.innerHTML = `
-                    <strong>${meal.name}</strong>: ${meal.calories} ккал
-                    <button onclick="deleteMeal(${index})" style="float: right; width: auto;">Удалить</button>
-                `;
-                mealsList.appendChild(mealEntry);
-            });
-            
-            document.getElementById('total-calories').textContent = `Всего калорий: ${total}`;
-            updateCaloriesComparison(total);
-        }
-
-        // Удаление приёма пищи
-        function deleteMeal(index) {
-            if (!currentUser) return;
-            
-            userData[currentUser].meals[today].splice(index, 1);
-            localStorage.setItem('userData', JSON.stringify(userData));
-            updateMealsList();
-        }
-
-        // Сохранение дня
-        function saveDay() {
-            if (!currentUser) return;
-            
-            const total = userData[currentUser].meals[today]?.reduce((sum, meal) => sum + meal.calories, 0) || 0;
-            userData[currentUser].days[today] = total;
-            localStorage.setItem('userData', JSON.stringify(userData));
-            alert('Данные за день сохранены');
-        }
-
-        // Сравнение калорий
-        function updateCaloriesComparison(totalCalories) {
-            if (!currentUser) return;
-            
-            const dailyCalories = userData[currentUser].dailyCalories || 0;
-            const total = totalCalories !== undefined ? totalCalories : 
-                (userData[currentUser].meals[today]?.reduce((sum, meal) => sum + meal.calories, 0) || 0);
-            
-            const comparisonElement = document.getElementById('calories-comparison');
-            
-            if (dailyCalories === 0) {
-                comparisonElement.innerHTML = 'Рассчитайте свою норму калорий во вкладке "Мои параметры"';
-                return;
-            }
-            
-            if (total < dailyCalories) {
-                comparisonElement.innerHTML = `Вы употребили <span class="red">${total} из ${dailyCalories}</span> ккал (недостаточно)`;
-            } else {
-                comparisonElement.innerHTML = `Вы употребили <span class="green">${total} из ${dailyCalories}</span> ккал (норма достигнута)`;
-            }
-        }
+      }
     </script>
-</body>
+  </body>
 </html>
