@@ -195,44 +195,6 @@
       .hidden {
         display: none;
       }
-      .meal-type-tabs {
-        display: flex;
-        background-color: white;
-        border-bottom: 1px solid #e5e5ea;
-        position: sticky;
-        top: 114px;
-        z-index: 98;
-      }
-      .meal-type-tab {
-        flex: 1;
-        padding: 12px;
-        text-align: center;
-        border-bottom: 2px solid transparent;
-        cursor: pointer;
-      }
-      .meal-type-tab.active {
-        border-bottom: 2px solid #007aff;
-        color: #007aff;
-      }
-      .add-meal-form {
-        padding: 16px;
-        background-color: white;
-        border-bottom: 1px solid #e5e5ea;
-      }
-      .meal-type-header {
-        padding: 16px;
-        font-size: 16px;
-        font-weight: 600;
-        background-color: #f7f7f7;
-        border-bottom: 1px solid #e5e5ea;
-      }
-      .meal-type-summary {
-        padding: 8px 16px;
-        font-size: 14px;
-        color: #8e8e93;
-        background-color: #f7f7f7;
-        text-align: right;
-      }
     </style>
   </head>
   <body>
@@ -351,96 +313,24 @@
             <div id="calories-comparison" class="calories-comparison"></div>
           </div>
         </div>
-      </div>
-
-      <div class="meal-type-tabs">
-        <div class="meal-type-tab active" onclick="openMealType('breakfast', this)">Завтрак</div>
-        <div class="meal-type-tab" onclick="openMealType('lunch', this)">Обед</div>
-        <div class="meal-type-tab" onclick="openMealType('dinner', this)">Ужин</div>
-        <div class="meal-type-tab" onclick="openMealType('snack', this)">Перекус</div>
-      </div>
-
-      <!-- Форма добавления для завтрака -->
-      <div id="breakfast-form" class="add-meal-form">
         <div class="form-group">
-          <label class="form-label">Название блюда</label>
-          <input type="text" id="breakfast-name" class="form-input" placeholder="Например: Омлет" />
+          <label class="form-label">Название приёма пищи</label>
+          <input type="text" id="meal-name" class="form-input" placeholder="Например: Завтрак" />
         </div>
         <div class="form-group">
           <label class="form-label">Калории</label>
           <input
             type="number"
-            id="breakfast-calories"
+            id="meal-calories"
             class="form-input"
             placeholder="Введите количество калорий"
           />
         </div>
-        <button onclick="addMeal('breakfast')" class="btn">Добавить завтрак</button>
+        <button onclick="addMeal()" class="btn">Добавить</button>
       </div>
-
-      <!-- Форма добавления для обеда -->
-      <div id="lunch-form" class="add-meal-form" style="display: none">
-        <div class="form-group">
-          <label class="form-label">Название блюда</label>
-          <input type="text" id="lunch-name" class="form-input" placeholder="Например: Суп" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Калории</label>
-          <input
-            type="number"
-            id="lunch-calories"
-            class="form-input"
-            placeholder="Введите количество калорий"
-          />
-        </div>
-        <button onclick="addMeal('lunch')" class="btn">Добавить обед</button>
-      </div>
-
-      <!-- Форма добавления для ужина -->
-      <div id="dinner-form" class="add-meal-form" style="display: none">
-        <div class="form-group">
-          <label class="form-label">Название блюда</label>
-          <input
-            type="text"
-            id="dinner-name"
-            class="form-input"
-            placeholder="Например: Рыба с овощами"
-          />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Калории</label>
-          <input
-            type="number"
-            id="dinner-calories"
-            class="form-input"
-            placeholder="Введите количество калорий"
-          />
-        </div>
-        <button onclick="addMeal('dinner')" class="btn">Добавить ужин</button>
-      </div>
-
-      <!-- Форма добавления для перекуса -->
-      <div id="snack-form" class="add-meal-form" style="display: none">
-        <div class="form-group">
-          <label class="form-label">Название блюда</label>
-          <input type="text" id="snack-name" class="form-input" placeholder="Например: Яблоко" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Калории</label>
-          <input
-            type="number"
-            id="snack-calories"
-            class="form-input"
-            placeholder="Введите количество калорий"
-          />
-        </div>
-        <button onclick="addMeal('snack')" class="btn">Добавить перекус</button>
-      </div>
-
       <div class="section">
         <div class="section-title">Мои приёмы пищи</div>
         <div id="meals-list"></div>
-        <div id="daily-summary" class="meal-type-summary"></div>
       </div>
       <button onclick="saveDay()" class="btn">Сохранить день</button>
     </div>
@@ -454,8 +344,6 @@
       let userData = JSON.parse(localStorage.getItem('userData')) || {};
       // Текущая дата
       const today = new Date().toLocaleDateString();
-      // Текущий тип приёма пищи
-      let currentMealType = 'breakfast';
 
       // Инициализация Telegram WebApp
       if (window.Telegram && Telegram.WebApp) {
@@ -477,7 +365,6 @@
           document.getElementById('profile-info').classList.remove('hidden');
           document.getElementById('profile-username').textContent = currentUser;
           loadUserData();
-          updateMealsList();
         } else {
           document.getElementById('login-form').classList.remove('hidden');
           document.getElementById('register-form').classList.add('hidden');
@@ -560,6 +447,7 @@
         }
 
         updateUI();
+        updateMealsList();
       }
 
       // Выход
@@ -583,30 +471,6 @@
         // Показать выбранную вкладку
         document.getElementById(tabId).classList.add('active');
         button.classList.add('active');
-
-        // Если открываем вкладку калорий - обновляем список
-        if (tabId === 'calories-tab') {
-          updateMealsList();
-        }
-      }
-
-      // Открытие вкладки с типом приёма пищи
-      function openMealType(type, element) {
-        currentMealType = type;
-
-        // Скрыть все формы
-        document.querySelectorAll('.add-meal-form').forEach((form) => {
-          form.style.display = 'none';
-        });
-
-        // Убрать активность у всех вкладок
-        document.querySelectorAll('.meal-type-tab').forEach((tab) => {
-          tab.classList.remove('active');
-        });
-
-        // Показать выбранную форму
-        document.getElementById(`${type}-form`).style.display = 'block';
-        element.classList.add('active');
       }
 
       // Загрузка данных пользователя
@@ -672,43 +536,34 @@
       }
 
       // Добавление приёма пищи
-      function addMeal(type) {
+      function addMeal() {
         if (!currentUser) {
           alert('Войдите в систему');
           return;
         }
 
-        const name = document.getElementById(`${type}-name`).value;
-        const calories = parseInt(document.getElementById(`${type}-calories`).value);
+        const name = document.getElementById('meal-name').value;
+        const calories = parseInt(document.getElementById('meal-calories').value);
 
         if (!name || !calories) {
           alert('Заполните все поля');
           return;
         }
 
-        // Инициализируем данные за сегодня, если их нет
         if (!userData[currentUser].meals[today]) {
-          userData[currentUser].meals[today] = {
-            breakfast: [],
-            lunch: [],
-            dinner: [],
-            snack: [],
-          };
+          userData[currentUser].meals[today] = [];
         }
 
-        // Добавляем запись
-        userData[currentUser].meals[today][type].push({
+        userData[currentUser].meals[today].push({
           name,
           calories,
-          type,
-          timestamp: new Date().getTime(),
         });
 
         localStorage.setItem('userData', JSON.stringify(userData));
 
         // Очищаем поля
-        document.getElementById(`${type}-name`).value = '';
-        document.getElementById(`${type}-calories`).value = '';
+        document.getElementById('meal-name').value = '';
+        document.getElementById('meal-calories').value = '';
 
         // Обновляем список
         updateMealsList();
@@ -721,86 +576,41 @@
         const mealsList = document.getElementById('meals-list');
         mealsList.innerHTML = '';
 
-        // Проверяем, есть ли данные за сегодня
         if (
           !userData[currentUser].meals[today] ||
-          Object.values(userData[currentUser].meals[today]).flat().length === 0
+          userData[currentUser].meals[today].length === 0
         ) {
           mealsList.innerHTML = '<div class="meal-entry">Нет записей за сегодня</div>';
           document.getElementById('total-calories').textContent = 'Всего калорий: 0';
-          document.getElementById('daily-summary').textContent = '';
           updateCaloriesComparison(0);
           return;
         }
 
         let total = 0;
-        let typeTotals = {
-          breakfast: 0,
-          lunch: 0,
-          dinner: 0,
-          snack: 0,
-        };
+        userData[currentUser].meals[today].forEach((meal, index) => {
+          total += meal.calories;
 
-        // Показываем приёмы пищи по категориям
-        const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
-        mealTypes.forEach((type) => {
-          if (
-            userData[currentUser].meals[today][type] &&
-            userData[currentUser].meals[today][type].length > 0
-          ) {
-            // Добавляем заголовок типа приёма пищи
-            const typeHeader = document.createElement('div');
-            typeHeader.className = 'meal-type-header';
-            typeHeader.textContent = getMealTypeName(type);
-            mealsList.appendChild(typeHeader);
-
-            // Добавляем каждое блюдо
-            userData[currentUser].meals[today][type].forEach((meal, index) => {
-              total += meal.calories;
-              typeTotals[type] += meal.calories;
-
-              const mealEntry = document.createElement('div');
-              mealEntry.className = 'meal-entry';
-              mealEntry.innerHTML = `
-                            <div class="meal-info">
-                                <div class="meal-name">${meal.name}</div>
-                                <div class="meal-calories">${meal.calories} ккал</div>
-                            </div>
-                            <button onclick="deleteMeal('${type}', ${index})" class="delete-btn">Удалить</button>
-                        `;
-              mealsList.appendChild(mealEntry);
-            });
-
-            // Добавляем итог по типу приёма пищи
-            const typeSummary = document.createElement('div');
-            typeSummary.className = 'meal-type-summary';
-            typeSummary.textContent = `Всего: ${typeTotals[type]} ккал`;
-            mealsList.appendChild(typeSummary);
-          }
+          const mealEntry = document.createElement('div');
+          mealEntry.className = 'meal-entry';
+          mealEntry.innerHTML = `
+                    <div class="meal-info">
+                        <div class="meal-name">${meal.name}</div>
+                        <div class="meal-calories">${meal.calories} ккал</div>
+                    </div>
+                    <button onclick="deleteMeal(${index})" class="delete-btn">Удалить</button>
+                `;
+          mealsList.appendChild(mealEntry);
         });
 
-        // Обновляем общее количество калорий
         document.getElementById('total-calories').textContent = `Всего калорий: ${total}`;
-        document.getElementById('daily-summary').textContent = `Итого за день: ${total} ккал`;
         updateCaloriesComparison(total);
       }
 
-      // Получение названия типа приёма пищи
-      function getMealTypeName(type) {
-        const names = {
-          breakfast: 'Завтрак',
-          lunch: 'Обед',
-          dinner: 'Ужин',
-          snack: 'Перекус',
-        };
-        return names[type] || type;
-      }
-
       // Удаление приёма пищи
-      function deleteMeal(type, index) {
+      function deleteMeal(index) {
         if (!currentUser) return;
 
-        userData[currentUser].meals[today][type].splice(index, 1);
+        userData[currentUser].meals[today].splice(index, 1);
         localStorage.setItem('userData', JSON.stringify(userData));
         updateMealsList();
       }
@@ -812,12 +622,8 @@
           return;
         }
 
-        const total = userData[currentUser].meals[today]
-          ? Object.values(userData[currentUser].meals[today])
-              .flat()
-              .reduce((sum, meal) => sum + meal.calories, 0)
-          : 0;
-
+        const total =
+          userData[currentUser].meals[today]?.reduce((sum, meal) => sum + meal.calories, 0) || 0;
         userData[currentUser].days[today] = total;
         localStorage.setItem('userData', JSON.stringify(userData));
         alert('Данные за день сохранены');
@@ -831,11 +637,8 @@
         const total =
           totalCalories !== undefined
             ? totalCalories
-            : userData[currentUser].meals[today]
-            ? Object.values(userData[currentUser].meals[today])
-                .flat()
-                .reduce((sum, meal) => sum + meal.calories, 0)
-            : 0;
+            : userData[currentUser].meals[today]?.reduce((sum, meal) => sum + meal.calories, 0) ||
+              0;
 
         const comparisonElement = document.getElementById('calories-comparison');
 
