@@ -1,21 +1,391 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
   <head>
-    <title>Моя Mini App</title>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="styles.css" />
-    <!-- Для PWA -->
-    <link rel="manifest" href="manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Фитнес-трекер</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .tab {
+        display: none;
+      }
+      .active {
+        display: block;
+      }
+      .nav {
+        display: flex;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+      }
+      .nav button {
+        padding: 10px 15px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .nav button.active {
+        border-bottom: 2px solid #007bff;
+        color: #007bff;
+      }
+      input,
+      button {
+        padding: 8px;
+        margin: 5px 0;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      .red {
+        color: red;
+        font-weight: bold;
+      }
+      .green {
+        color: green;
+        font-weight: bold;
+      }
+      .meal-entry {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin: 10px 0;
+        background-color: white;
+      }
+    </style>
   </head>
   <body>
-    <h1>Привет, мир!</h1>
-    <button onclick="alert('Кнопка работает!')">Нажми меня</button>
+    <!-- Авторизация/Регистрация -->
+    <div id="auth-tab" class="tab active">
+      <h2>Вход / Регистрация</h2>
+      <div id="login-form">
+        <input type="text" id="login-username" placeholder="Логин" />
+        <input type="password" id="login-password" placeholder="Пароль" />
+        <button onclick="login()">Войти</button>
+        <button onclick="showRegister()">Регистрация</button>
+      </div>
+      <div id="register-form" style="display: none">
+        <input type="text" id="reg-username" placeholder="Логин" />
+        <input type="password" id="reg-password" placeholder="Пароль" />
+        <button onclick="register()">Зарегистрироваться</button>
+        <button onclick="showLogin()">Уже есть аккаунт</button>
+      </div>
+    </div>
 
-    <!-- Для Telegram Mini App -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Личный кабинет -->
+    <div id="account-tab" class="tab">
+      <div class="nav">
+        <button onclick="openTab('params-tab', this)" class="active">Мои параметры</button>
+        <button onclick="openTab('calories-tab', this)">Записать калории</button>
+        <button onclick="logout()" style="margin-left: auto">Выйти</button>
+      </div>
+
+      <!-- Вкладка "Мои параметры" -->
+      <div id="params-tab" class="tab active">
+        <h3>Мои параметры</h3>
+        <input type="number" id="height" placeholder="Рост (см)" />
+        <input type="number" id="weight" placeholder="Вес (кг)" />
+        <button onclick="calculateCalories()">Рассчитать калории</button>
+        <div id="calories-result"></div>
+      </div>
+
+      <!-- Вкладка "Записать калории" -->
+      <div id="calories-tab" class="tab">
+        <h3>Учёт калорий</h3>
+        <div id="daily-calories">
+          <h4>Сегодня: <span id="today-date"></span></h4>
+          <div id="total-calories">Всего калорий: 0</div>
+          <div id="calories-comparison"></div>
+        </div>
+
+        <h4>Добавить приём пищи:</h4>
+        <input type="text" id="meal-name" placeholder="Название" />
+        <input type="number" id="meal-calories" placeholder="Калории" />
+        <button onclick="addMeal()">Добавить</button>
+
+        <div id="meals-list"></div>
+        <button onclick="saveDay()">Сохранить день</button>
+      </div>
+    </div>
+
     <script>
-      const tg = window.Telegram.WebApp;
-      tg.expand(); // Раскрыть приложение на весь экран
+      // Данные пользователей
+      let users = JSON.parse(localStorage.getItem('users')) || {};
+      // Текущий пользователь
+      let currentUser = null;
+      // Данные пользователя
+      let userData = JSON.parse(localStorage.getItem('userData')) || {};
+      // Текущая дата
+      const today = new Date().toLocaleDateString();
+
+      // Инициализация Telegram WebApp
+      if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+      }
+
+      // Показать форму регистрации
+      function showRegister() {
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('register-form').style.display = 'block';
+      }
+
+      // Показать форму входа
+      function showLogin() {
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('login-form').style.display = 'block';
+      }
+
+      // Регистрация
+      function register() {
+        const username = document.getElementById('reg-username').value;
+        const password = document.getElementById('reg-password').value;
+
+        if (!username || !password) {
+          alert('Заполните все поля');
+          return;
+        }
+
+        if (users[username]) {
+          alert('Пользователь уже существует');
+          return;
+        }
+
+        users[username] = password;
+        localStorage.setItem('users', JSON.stringify(users));
+
+        // Создаём запись для нового пользователя
+        if (!userData[username]) {
+          userData[username] = {
+            height: 0,
+            weight: 0,
+            dailyCalories: 0,
+            meals: {},
+            days: {},
+          };
+          localStorage.setItem('userData', JSON.stringify(userData));
+        }
+
+        alert('Регистрация успешна!');
+        showLogin();
+      }
+
+      // Вход
+      function login() {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+
+        if (!users[username] || users[username] !== password) {
+          alert('Неверный логин или пароль');
+          return;
+        }
+
+        currentUser = username;
+
+        // Загружаем данные пользователя
+        if (!userData[username]) {
+          userData[username] = {
+            height: 0,
+            weight: 0,
+            dailyCalories: 0,
+            meals: {},
+            days: {},
+          };
+          localStorage.setItem('userData', JSON.stringify(userData));
+        }
+
+        // Переключаем на личный кабинет
+        document.getElementById('auth-tab').classList.remove('active');
+        document.getElementById('account-tab').classList.add('active');
+
+        // Загружаем данные
+        loadUserData();
+        document.getElementById('today-date').textContent = today;
+        updateMealsList();
+      }
+
+      // Выход
+      function logout() {
+        currentUser = null;
+        document.getElementById('account-tab').classList.remove('active');
+        document.getElementById('auth-tab').classList.add('active');
+      }
+
+      // Переключение вкладок
+      function openTab(tabId, button) {
+        // Скрыть все вкладки
+        document.querySelectorAll('#account-tab .tab').forEach((tab) => {
+          tab.classList.remove('active');
+        });
+
+        // Убрать активность у всех кнопок
+        document.querySelectorAll('#account-tab .nav button').forEach((btn) => {
+          btn.classList.remove('active');
+        });
+
+        // Показать выбранную вкладку
+        document.getElementById(tabId).classList.add('active');
+        button.classList.add('active');
+      }
+
+      // Загрузка данных пользователя
+      function loadUserData() {
+        if (!currentUser) return;
+
+        const user = userData[currentUser];
+        document.getElementById('height').value = user.height || '';
+        document.getElementById('weight').value = user.weight || '';
+
+        if (user.dailyCalories) {
+          document.getElementById(
+            'calories-result',
+          ).innerHTML = `Ваша норма: <strong>${user.dailyCalories}</strong> ккал`;
+        }
+      }
+
+      // Расчёт калорий (вес * рост)
+      function calculateCalories() {
+        if (!currentUser) return;
+
+        const height = parseInt(document.getElementById('height').value);
+        const weight = parseInt(document.getElementById('weight').value);
+
+        if (!height || !weight) {
+          alert('Введите рост и вес');
+          return;
+        }
+
+        const calories = weight * height;
+        userData[currentUser].height = height;
+        userData[currentUser].weight = weight;
+        userData[currentUser].dailyCalories = calories;
+        localStorage.setItem('userData', JSON.stringify(userData));
+
+        document.getElementById(
+          'calories-result',
+        ).innerHTML = `Ваша норма: <strong>${calories}</strong> ккал`;
+
+        // Обновляем сравнение калорий
+        updateCaloriesComparison();
+      }
+
+      // Добавление приёма пищи
+      function addMeal() {
+        if (!currentUser) return;
+
+        const name = document.getElementById('meal-name').value;
+        const calories = parseInt(document.getElementById('meal-calories').value);
+
+        if (!name || !calories) {
+          alert('Заполните все поля');
+          return;
+        }
+
+        if (!userData[currentUser].meals[today]) {
+          userData[currentUser].meals[today] = [];
+        }
+
+        userData[currentUser].meals[today].push({
+          name,
+          calories,
+        });
+
+        localStorage.setItem('userData', JSON.stringify(userData));
+
+        // Очищаем поля
+        document.getElementById('meal-name').value = '';
+        document.getElementById('meal-calories').value = '';
+
+        // Обновляем список
+        updateMealsList();
+      }
+
+      // Обновление списка приёмов пищи
+      function updateMealsList() {
+        if (!currentUser) return;
+
+        const mealsList = document.getElementById('meals-list');
+        mealsList.innerHTML = '';
+
+        if (
+          !userData[currentUser].meals[today] ||
+          userData[currentUser].meals[today].length === 0
+        ) {
+          mealsList.innerHTML = '<p>Нет записей за сегодня</p>';
+          return;
+        }
+
+        let total = 0;
+        userData[currentUser].meals[today].forEach((meal, index) => {
+          total += meal.calories;
+
+          const mealEntry = document.createElement('div');
+          mealEntry.className = 'meal-entry';
+          mealEntry.innerHTML = `
+                    <strong>${meal.name}</strong>: ${meal.calories} ккал
+                    <button onclick="deleteMeal(${index})" style="float: right; width: auto;">Удалить</button>
+                `;
+          mealsList.appendChild(mealEntry);
+        });
+
+        document.getElementById('total-calories').textContent = `Всего калорий: ${total}`;
+        updateCaloriesComparison(total);
+      }
+
+      // Удаление приёма пищи
+      function deleteMeal(index) {
+        if (!currentUser) return;
+
+        userData[currentUser].meals[today].splice(index, 1);
+        localStorage.setItem('userData', JSON.stringify(userData));
+        updateMealsList();
+      }
+
+      // Сохранение дня
+      function saveDay() {
+        if (!currentUser) return;
+
+        const total =
+          userData[currentUser].meals[today]?.reduce((sum, meal) => sum + meal.calories, 0) || 0;
+        userData[currentUser].days[today] = total;
+        localStorage.setItem('userData', JSON.stringify(userData));
+        alert('Данные за день сохранены');
+      }
+
+      // Сравнение калорий
+      function updateCaloriesComparison(totalCalories) {
+        if (!currentUser) return;
+
+        const dailyCalories = userData[currentUser].dailyCalories || 0;
+        const total =
+          totalCalories !== undefined
+            ? totalCalories
+            : userData[currentUser].meals[today]?.reduce((sum, meal) => sum + meal.calories, 0) ||
+              0;
+
+        const comparisonElement = document.getElementById('calories-comparison');
+
+        if (dailyCalories === 0) {
+          comparisonElement.innerHTML = 'Рассчитайте свою норму калорий во вкладке "Мои параметры"';
+          return;
+        }
+
+        if (total < dailyCalories) {
+          comparisonElement.innerHTML = `Вы употребили <span class="red">${total} из ${dailyCalories}</span> ккал`;
+        } else {
+          comparisonElement.innerHTML = `Вы употребили <span class="green">${total} из ${dailyCalories}</span> ккал`;
+        }
+      }
     </script>
   </body>
 </html>
