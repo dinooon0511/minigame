@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Моя Mini App</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Для PWA -->
+    <link rel="manifest" href="manifest.json" />
+  </head>
+  <body>
+    <h1>Привет, мир!</h1>
+    <button onclick="alert('Кнопка работает!')">Нажми меня</button>
+
+    <!-- Для Telegram Mini App -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+      const tg = window.Telegram.WebApp;
+      tg.expand(); // Раскрыть приложение на весь экран
+    </script>
+  </body>
+</html>
