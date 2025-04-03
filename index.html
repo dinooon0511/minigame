@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Фитнес Трекер</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -195,6 +194,74 @@
       .hidden {
         display: none;
       }
+      .progress-container {
+        margin: 16px 0;
+        background-color: #e5e5ea;
+        border-radius: 8px;
+        height: 10px;
+      }
+      .progress-bar {
+        height: 100%;
+        border-radius: 8px;
+        background-color: #007aff;
+        transition: width 0.3s ease;
+      }
+      .task {
+        padding: 16px;
+        border-bottom: 1px solid #e5e5ea;
+      }
+      .task-title {
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      .task-reward {
+        color: #8e8e93;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+      .task-progress {
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      .task-completed {
+        color: #34c759;
+        font-weight: 500;
+        margin-top: 8px;
+      }
+      .avatar-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #007aff;
+        margin-bottom: 8px;
+      }
+      .avatar-upload {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .avatar-upload input {
+        display: none;
+      }
+      .avatar-upload-label {
+        padding: 8px 16px;
+        background-color: #007aff;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 8px;
+      }
+      .avatar-upload-label:hover {
+        background-color: #0062cc;
+      }
     </style>
   </head>
   <body>
@@ -208,6 +275,7 @@
       <button onclick="openTab('auth-tab', this)" class="active">Профиль</button>
       <button onclick="openTab('params-tab', this)">Параметры</button>
       <button onclick="openTab('calories-tab', this)">Калории</button>
+      <button onclick="openTab('tasks-tab', this)">Задания</button>
     </div>
 
     <!-- Вкладка авторизации/профиля -->
@@ -253,10 +321,21 @@
           <button onclick="showLogin()" class="btn btn-secondary">Уже есть аккаунт</button>
         </div>
         <div id="profile-info" class="hidden">
+          <div class="avatar-container">
+            <img id="profile-avatar" src="" class="avatar" alt="Аватар" />
+            <div class="avatar-upload">
+              <input type="file" id="avatar-input" accept="image/*" />
+              <label for="avatar-input" class="avatar-upload-label">Изменить аватар</label>
+            </div>
+          </div>
           <div class="profile-info">
             <div class="profile-row">
               <span class="profile-label">Логин</span>
               <span id="profile-username" class="profile-value"></span>
+            </div>
+            <div class="profile-row">
+              <span class="profile-label">Баллы</span>
+              <span id="profile-points" class="profile-value">0</span>
             </div>
             <div class="profile-row">
               <span class="profile-label">Тип учетной записи</span>
@@ -335,6 +414,14 @@
       <button onclick="saveDay()" class="btn">Сохранить день</button>
     </div>
 
+    <!-- Вкладка заданий -->
+    <div id="tasks-tab" class="tab">
+      <div class="section">
+        <div class="section-title">Ежедневные задания</div>
+        <div id="tasks-list"></div>
+      </div>
+    </div>
+
     <script>
       // Данные пользователей
       let users = JSON.parse(localStorage.getItem('users')) || {};
@@ -344,18 +431,83 @@
       let userData = JSON.parse(localStorage.getItem('userData')) || {};
       // Текущая дата
       const today = new Date().toLocaleDateString();
-
-      // Инициализация Telegram WebApp
-      if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-      }
+      // Последний день, когда проверялись задания
+      let lastCheckDay = localStorage.getItem('lastCheckDay') || '';
 
       // Инициализация при загрузке
       document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('today-date').textContent = today;
+
+        // Проверяем, наступил ли новый день
+        if (lastCheckDay !== today) {
+          resetDailyTasks();
+          lastCheckDay = today;
+          localStorage.setItem('lastCheckDay', today);
+        }
+
         updateUI();
+        setupAvatarUpload();
       });
+
+      // Загрузка аватара
+      function loadAvatar() {
+        if (!currentUser) return;
+
+        const avatarData = userData[currentUser]?.avatar;
+        const avatarElement = document.getElementById('profile-avatar');
+
+        if (avatarData) {
+          avatarElement.src = avatarData;
+        } else {
+          // Заглушка, если аватар не установлен
+          avatarElement.src =
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='20' fill='%23e5e5ea'/%3E%3Ccircle cx='50' cy='100' r='40' fill='%23e5e5ea'/%3E%3C/svg%3E";
+        }
+      }
+
+      // Настройка загрузки аватара
+      function setupAvatarUpload() {
+        const avatarInput = document.getElementById('avatar-input');
+        avatarInput.addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          // Проверка типа файла
+          if (!file.type.match('image.*')) {
+            alert('Пожалуйста, выберите изображение');
+            return;
+          }
+
+          // Проверка размера файла (макс. 2MB)
+          if (file.size > 2 * 1024 * 1024) {
+            alert('Изображение должно быть меньше 2MB');
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const avatarData = e.target.result;
+            document.getElementById('profile-avatar').src = avatarData;
+
+            // Сохраняем аватар в данные пользователя
+            if (userData[currentUser]) {
+              userData[currentUser].avatar = avatarData;
+              localStorage.setItem('userData', JSON.stringify(userData));
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      // Сброс ежедневных заданий
+      function resetDailyTasks() {
+        Object.keys(userData).forEach((username) => {
+          if (userData[username]) {
+            userData[username].dailyTasksCompleted = {};
+          }
+        });
+        localStorage.setItem('userData', JSON.stringify(userData));
+      }
 
       // Обновление интерфейса
       function updateUI() {
@@ -364,7 +516,11 @@
           document.getElementById('register-form').classList.add('hidden');
           document.getElementById('profile-info').classList.remove('hidden');
           document.getElementById('profile-username').textContent = currentUser;
+          document.getElementById('profile-points').textContent =
+            userData[currentUser]?.points || 0;
           loadUserData();
+          loadAvatar();
+          updateTasksList();
         } else {
           document.getElementById('login-form').classList.remove('hidden');
           document.getElementById('register-form').classList.add('hidden');
@@ -386,8 +542,8 @@
 
       // Регистрация
       function register() {
-        const username = document.getElementById('reg-username').value;
-        const password = document.getElementById('reg-password').value;
+        const username = document.getElementById('reg-username').value.trim();
+        const password = document.getElementById('reg-password').value.trim();
 
         if (!username || !password) {
           alert('Заполните все поля');
@@ -412,6 +568,9 @@
             dailyCalories: 0,
             meals: {},
             days: {},
+            points: 0,
+            dailyTasksCompleted: {},
+            avatar: '',
           };
           localStorage.setItem('userData', JSON.stringify(userData));
         }
@@ -422,8 +581,8 @@
 
       // Вход
       function login() {
-        const username = document.getElementById('login-username').value;
-        const password = document.getElementById('login-password').value;
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value.trim();
 
         if (!users[username] || users[username] !== password) {
           alert('Неверный логин или пароль');
@@ -442,6 +601,9 @@
             dailyCalories: 0,
             meals: {},
             days: {},
+            points: 0,
+            dailyTasksCompleted: {},
+            avatar: '',
           };
           localStorage.setItem('userData', JSON.stringify(userData));
         }
@@ -471,6 +633,11 @@
         // Показать выбранную вкладку
         document.getElementById(tabId).classList.add('active');
         button.classList.add('active');
+
+        // Обновляем список заданий при открытии вкладки
+        if (tabId === 'tasks-tab') {
+          updateTasksList();
+        }
       }
 
       // Загрузка данных пользователя
@@ -542,7 +709,7 @@
           return;
         }
 
-        const name = document.getElementById('meal-name').value;
+        const name = document.getElementById('meal-name').value.trim();
         const calories = parseInt(document.getElementById('meal-calories').value);
 
         if (!name || !calories) {
@@ -557,6 +724,7 @@
         userData[currentUser].meals[today].push({
           name,
           calories,
+          id: Date.now(), // Добавляем уникальный идентификатор
         });
 
         localStorage.setItem('userData', JSON.stringify(userData));
@@ -567,6 +735,7 @@
 
         // Обновляем список
         updateMealsList();
+        updateTasksList();
       }
 
       // Обновление списка приёмов пищи
@@ -597,7 +766,7 @@
                         <div class="meal-name">${meal.name}</div>
                         <div class="meal-calories">${meal.calories} ккал</div>
                     </div>
-                    <button onclick="deleteMeal(${index})" class="delete-btn">Удалить</button>
+                    <button onclick="deleteMeal('${meal.id}')" class="delete-btn">Удалить</button>
                 `;
           mealsList.appendChild(mealEntry);
         });
@@ -607,12 +776,17 @@
       }
 
       // Удаление приёма пищи
-      function deleteMeal(index) {
+      function deleteMeal(mealId) {
         if (!currentUser) return;
+
+        // Находим индекс по id
+        const index = userData[currentUser].meals[today].findIndex((meal) => meal.id === mealId);
+        if (index === -1) return;
 
         userData[currentUser].meals[today].splice(index, 1);
         localStorage.setItem('userData', JSON.stringify(userData));
         updateMealsList();
+        updateTasksList();
       }
 
       // Сохранение дня
@@ -651,6 +825,102 @@
           comparisonElement.innerHTML = `Вы употребили <span class="red">${total} из ${dailyCalories}</span> ккал (недостаточно)`;
         } else {
           comparisonElement.innerHTML = `Вы употребили <span class="green">${total} из ${dailyCalories}</span> ккал (норма достигнута)`;
+        }
+
+        // Проверяем выполнение заданий
+        checkTasksCompletion(total, dailyCalories);
+      }
+
+      // Обновление списка заданий
+      function updateTasksList() {
+        if (!currentUser) return;
+
+        const tasksList = document.getElementById('tasks-list');
+        tasksList.innerHTML = '';
+
+        const totalCalories =
+          userData[currentUser].meals[today]?.reduce((sum, meal) => sum + meal.calories, 0) || 0;
+        const dailyCalories = userData[currentUser].dailyCalories || 0;
+
+        // Задание 1: Набрать 2000 калорий
+        const task1Completed =
+          userData[currentUser].dailyTasksCompleted?.['2000_calories'] === true;
+        const task1Progress = Math.min((totalCalories / 2000) * 100, 100);
+
+        const task1Element = document.createElement('div');
+        task1Element.className = 'task';
+        task1Element.innerHTML = `
+                <div class="task-title">Набрать 2000 калорий</div>
+                <div class="task-reward">Награда: 20 баллов</div>
+                <div class="task-progress">Прогресс: ${totalCalories} / 2000 ккал</div>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: ${task1Progress}%"></div>
+                </div>
+                ${
+                  task1Completed
+                    ? '<div class="task-completed">Задание выполнено сегодня!</div>'
+                    : ''
+                }
+            `;
+        tasksList.appendChild(task1Element);
+
+        // Задание 2: Набрать норму калорий
+        if (dailyCalories > 0) {
+          const task2Completed = userData[currentUser].dailyTasksCompleted?.['daily_norm'] === true;
+          const task2Progress = Math.min((totalCalories / dailyCalories) * 100, 100);
+
+          const task2Element = document.createElement('div');
+          task2Element.className = 'task';
+          task2Element.innerHTML = `
+                    <div class="task-title">Набрать норму калорий</div>
+                    <div class="task-reward">Награда: 30 баллов</div>
+                    <div class="task-progress">Прогресс: ${totalCalories} / ${dailyCalories} ккал</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: ${task2Progress}%"></div>
+                    </div>
+                    ${
+                      task2Completed
+                        ? '<div class="task-completed">Задание выполнено сегодня!</div>'
+                        : ''
+                    }
+                `;
+          tasksList.appendChild(task2Element);
+        }
+      }
+
+      // Проверка выполнения заданий
+      function checkTasksCompletion(totalCalories, dailyCalories) {
+        if (!currentUser) return;
+
+        // Задание 1: Набрать 2000 калорий
+        if (
+          totalCalories >= 2000 &&
+          !userData[currentUser].dailyTasksCompleted?.['2000_calories']
+        ) {
+          userData[currentUser].points = (userData[currentUser].points || 0) + 20;
+          userData[currentUser].dailyTasksCompleted =
+            userData[currentUser].dailyTasksCompleted || {};
+          userData[currentUser].dailyTasksCompleted['2000_calories'] = true;
+          localStorage.setItem('userData', JSON.stringify(userData));
+          document.getElementById('profile-points').textContent = userData[currentUser].points;
+          updateTasksList();
+          alert('Поздравляем! Вы выполнили задание "Набрать 2000 калорий" и получили 20 баллов!');
+        }
+
+        // Задание 2: Набрать норму калорий
+        if (
+          dailyCalories > 0 &&
+          totalCalories >= dailyCalories &&
+          !userData[currentUser].dailyTasksCompleted?.['daily_norm']
+        ) {
+          userData[currentUser].points = (userData[currentUser].points || 0) + 30;
+          userData[currentUser].dailyTasksCompleted =
+            userData[currentUser].dailyTasksCompleted || {};
+          userData[currentUser].dailyTasksCompleted['daily_norm'] = true;
+          localStorage.setItem('userData', JSON.stringify(userData));
+          document.getElementById('profile-points').textContent = userData[currentUser].points;
+          updateTasksList();
+          alert('Поздравляем! Вы выполнили задание "Набрать норму калорий" и получили 30 баллов!');
         }
       }
     </script>
